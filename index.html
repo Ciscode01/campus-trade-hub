@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campus Trade Hub</title>
+  <meta name="description" content="Frontend-only prototype for an online campus trading system. No backend required. Data is stored in browser localStorage.">
+  <style>
+    /* ===== Color System (NOT green/white) ===== */
+    :root{
+      --bg: #0f172a;             /* slate-900 */
+      --panel: #111827;          /* gray-900 */
+      --muted: #94a3b8;          /* slate-400 */
+      --text: #e5e7eb;           /* gray-200 */
+      --primary: #4f46e5;        /* indigo-600 */
+      --primary-2: #6366f1;      /* indigo-500 */
+      --accent: #f59e0b;         /* amber-500 */
+      --accent-2: #fbbf24;       /* amber-400 */
+      --danger: #ef4444;         /* red-500 */
+      --success: #22c55e;        /* green-500 (tiny use ok) */
+      --card: #0b1220;           /* deep navy */
+      --chip: #1f2937;           /* gray-800 */
+      --input: #0b1220;          /* same as card */
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";}
+    body{background:linear-gradient(180deg,#0b1220 0%,#0f172a 70%); color:var(--text);}
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+    button{cursor:pointer;border:none}
+    input,select,textarea{background:var(--input);border:1px solid #1f2937;color:var(--text);padding:.8rem 1rem;border-radius:12px;outline:none}
+
+    /* ===== Layout ===== */
+    .container{max-width:1200px;margin:0 auto;padding:0 20px}
+
+    /* ===== Navbar ===== */
+    .nav{position:sticky;top:0;z-index:50;background:rgba(15,23,42,.8);backdrop-filter:blur(12px);border-bottom:1px solid #1f2937}
+    .nav-wrap{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+    .brand{display:flex;gap:10px;align-items:center}
+    .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--accent));box-shadow:var(--shadow)}
+    .brand h1{font-size:1.1rem;letter-spacing:.4px;margin:0}
+    .nav-actions{display:flex;gap:10px}
+    .btn{padding:.75rem 1.1rem;border-radius:12px;background:#1f2937;color:var(--text);transition:all .2s ease;display:inline-flex;align-items:center;gap:8px}
+    .btn:hover{transform:translateY(-1px);}
+    .btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-2));}
+    .btn.accent{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#111827}
+
+    /* ===== Hero ===== */
+    .hero{padding:48px 0 28px}
+    .hero-grid{display:grid;grid-template-columns:1.4fr .9fr;gap:24px}
+    .card{background:linear-gradient(180deg,#0b1220 0%, #0f172a 100%);border:1px solid #1f2937;border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card.pad{padding:24px}
+    .hero h2{font-size:2.2rem;margin:0 0 10px}
+    .hero p{color:var(--muted);margin:0 0 18px}
+    .chips{display:flex;flex-wrap:wrap;gap:10px}
+    .chip{background:var(--chip);border:1px solid #253042;color:#cbd5e1;padding:.45rem .9rem;border-radius:999px;font-size:.9rem;display:inline-flex;gap:8px;align-items:center}
+
+    .search-row{display:flex;gap:12px;margin-top:14px}
+    .search-row input{flex:1}
+
+    /* ===== Grid ===== */
+    .section{padding:10px 0 36px}
+    .section h3{margin:18px 0 10px;font-size:1.25rem}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+
+    .prod{background:linear-gradient(180deg,#0b1220,#0f172a);border:1px solid #1f2937;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:transform .18s ease, box-shadow .18s ease}
+    .prod:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+    .thumb{aspect-ratio: 16 / 11; background:#0a0f1c; display:grid; place-items:center}
+    .thumb svg{opacity:.9}
+    .p-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+    .p-title{font-weight:600}
+    .p-meta{display:flex;justify-content:space-between;align-items:center}
+    .price{color:var(--accent-2);font-weight:700}
+    .badge{font-size:.75rem;background:#1f2937;border:1px solid #273244;color:#cbd5e1;padding:.2rem .5rem;border-radius:999px}
+    .card-actions{display:flex;gap:10px;margin-top:6px}
+
+    /* ===== Forms / Panels ===== */
+    .panel{padding:18px;display:grid;gap:12px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .label{font-size:.9rem;color:#cbd5e1;margin-bottom:6px}
+    .select, .input, .textarea{width:100%}
+
+    .inline-help{font-size:.85rem;color:var(--muted)}
+
+    .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+    /* ===== Footer ===== */
+    footer{border-top:1px solid #1f2937;margin-top:36px}
+    .footer-wrap{display:flex;justify-content:space-between;align-items:center;padding:24px 0;font-size:.95rem;color:#cbd5e1}
+    .credit{opacity:.9}
+
+    /* ===== Modal ===== */
+    .modal{position:fixed;inset:0;background:rgba(2,6,23,.6); backdrop-filter: blur(6px); display:none; align-items:center; justify-content:center; padding:20px; z-index:100}
+    .modal.active{display:flex}
+    .modal-card{width:min(680px,100%); border-radius:20px; background:linear-gradient(180deg,#0b1220,#0f172a); border:1px solid #1f2937; box-shadow: var(--shadow)}
+    .modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #1f2937}
+    .modal-head h4{margin:0;font-size:1.1rem}
+    .modal-body{padding:16px}
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1024px){
+      .grid{grid-template-columns:repeat(3,1fr)}
+      .hero-grid{grid-template-columns:1fr}
+    }
+    @media (max-width: 720px){
+      .grid{grid-template-columns:repeat(2,1fr)}
+      .nav-actions{display:none}
+    }
+    @media (max-width: 480px){
+      .grid{grid-template-columns:1fr}
+      .search-row{flex-direction:column}
+      .grid-2{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== NAVBAR ===== -->
+  <nav class="nav">
+    <div class="container nav-wrap">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <h1>Campus Trade Hub</h1>
+      </div>
+      <div class="nav-actions">
+        <button class="btn" id="btnOpenUpload" title="Upload an item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Post Item
+        </button>
+        <button class="btn accent" id="btnExport" title="Export demo data JSON">Export</button>
+        <button class="btn primary" id="btnImport" title="Import demo data JSON">Import</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <header class="hero container">
+    <div class="hero-grid">
+      <div class="card pad">
+        <h2>Buy & sell within campus — fast, safe, local.</h2>
+        <p>Frontend-only demo: no backend or real payments. Items are stored in your browser's localStorage.</p>
+        <div class="chips" id="chips"></div>
+        <div class="search-row">
+          <input id="search" type="search" placeholder="Search items… (e.g., laptop, textbook, jersey)" aria-label="Search items" />
+          <select id="sort">
+            <option value="newest">Newest</option>
+            <option value="price_asc">Price: Low → High</option>
+            <option value="price_desc">Price: High → Low</option>
+          </select>
+        </div>
+        <p class="inline-help">Tip: Use the category chips above to filter quickly. Click an item to view details or mark as sold.</p>
+      </div>
+      <div class="card pad">
+        <h3>Quick Post</h3>
+        <div class="grid-2">
+          <div>
+            <div class="label">Title</div>
+            <input id="qp-title" class="input" placeholder="e.g., HP Pavilion 15" />
+          </div>
+          <div>
+            <div class="label">Price (₦)</div>
+            <input id="qp-price" class="input" type="number" min="0" placeholder="e.g., 150000" />
+          </div>
+          <div>
+            <div class="label">Category</div>
+            <select id="qp-cat" class="select"></select>
+          </div>
+          <div>
+            <div class="label">Contact</div>
+            <input id="qp-contact" class="input" placeholder="Phone/WhatsApp" />
+          </div>
+          <div class="grid-span">
+            <div class="label">Description</div>
+            <textarea id="qp-desc" class="textarea" rows="3" placeholder="Key specs, condition, pickup location"></textarea>
+          </div>
+          <div>
+            <button id="qp-post" class="btn primary" style="width:100%">Add Item</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== PRODUCTS ===== -->
+  <main class="container section">
+    <h3>Latest Listings</h3>
+    <div id="grid" class="grid"></div>
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <div class="container footer-wrap">
+      <div class="credit">© <span id="year"></span> Campus Trade Hub. Frontend prototype.</div>
+      <div>Footer: <strong>kudus and fatima</strong></div>
+    </div>
+  </footer>
+
+  <!-- ===== VIEW / EDIT MODAL ===== -->
+  <div class="modal" id="itemModal" role="dialog" aria-modal="true" aria-labelledby="mdlTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h4 id="mdlTitle">Item Details</h4>
+        <button class="btn" id="btnCloseModal">Close</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- ===== UPLOAD FULL MODAL ===== -->
+  <div class="modal" id="uploadModal" role="dialog" aria-modal="true" aria-labelledby="upTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h4 id="upTitle">Post a New Item</h4>
+        <button class="btn" id="btnCloseUpload">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="grid-2">
+          <div>
+            <div class="label">Title</div>
+            <input id="up-title" class="input" placeholder="e.g., Casio fx-991EX Calculator" />
+          </div>
+          <div>
+            <div class="label">Price (₦)</div>
+            <input id="up-price" class="input" type="number" min="0" placeholder="e.g., 6000" />
+          </div>
+          <div>
+            <div class="label">Category</div>
+            <select id="up-cat" class="select"></select>
+          </div>
+          <div>
+            <div class="label">Contact</div>
+            <input id="up-contact" class="input" placeholder="Phone/WhatsApp" />
+          </div>
+          <div class="grid-span">
+            <div class="label">Description</div>
+            <textarea id="up-desc" class="textarea" rows="4" placeholder="Condition, accessories, pickup point"></textarea>
+          </div>
+          <div class="grid-span">
+            <div class="label">Image (optional)</div>
+            <input id="up-image" class="input" type="file" accept="image/*" />
+            <p class="inline-help">If no image is provided, a placeholder will be used.</p>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn" id="btnResetForm">Reset</button>
+          <button class="btn accent" id="btnSaveItem">Save Item</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Data & Utilities =====
+    const storageKey = 'ct_products_v1';
+    const categories = [
+      'Books & Study',
+      'Electronics & Gadgets',
+      'Hostel Items',
+      'Clothing & Accessories',
+      'Food & Provisions',
+      'Services'
+    ];
+
+    const N = (n) => new Intl.NumberFormat('en-NG').format(n);
+
+    function uid(){ return Math.random().toString(36).slice(2,10) }
+
+    function now(){ return new Date().toISOString() }
+
+    function getProducts(){
+      const raw = localStorage.getItem(storageKey);
+      try{ return raw ? JSON.parse(raw) : [] }catch(e){ return [] }
+    }
+
+    function setProducts(arr){ localStorage.setItem(storageKey, JSON.stringify(arr)) }
+
+    function seedIfEmpty(){
+      if(getProducts().length) return;
+      const seed = [
+        {id:uid(), title:'HP Pavilion 15 (Ryzen 5, 8GB, 512GB)', price:150000, cat:categories[1], contact:'0803-000-1111', desc:'Very clean, 9/10 condition. Includes charger. Pickup: ICT Centre.', createdAt:now(), sold:false, img:''},
+        {id:uid(), title:'Engineering Mathematics (2nd Ed.)', price:2500, cat:categories[0], contact:'WhatsApp: 0812-222-3333', desc:'Lightly used. No markings. Pickup: Library foyer.', createdAt:now(), sold:false, img:''},
+        {id:uid(), title:'Hostel Table Lamp', price:3500, cat:categories[2], contact:'0701-444-5555', desc:'Warm light, perfect for night reading. Pickup: Hall B.', createdAt:now(), sold:false, img:''},
+        {id:uid(), title:'Departmental Jersey (M size)', price:7000, cat:categories[3], contact:'DM: @campus_seller', desc:'Brand new, never worn.', createdAt:now(), sold:false, img:''},
+        {id:uid(), title:'Phone Charger (Type-C, Fast Charge)', price:3000, cat:categories[1], contact:'0806-777-8888', desc:'6 months warranty.', createdAt:now(), sold:false, img:''},
+        {id:uid(), title:'Typing & Printing Services', price:200, cat:categories[5], contact:'WhatsApp only: 0809-000-1212', desc:'Per page. Fast delivery near Admin Block.', createdAt:now(), sold:false, img:''}
+      ];
+      setProducts(seed);
+    }
+
+    function placeholderSVG(){
+      return `<?xml version="1.0" encoding="UTF-8"?>
+      <svg width="160" height="110" viewBox="0 0 160 110" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stop-color="#1e293b"/>
+            <stop offset="100%" stop-color="#111827"/>
+          </linearGradient>
+        </defs>
+        <rect width="160" height="110" fill="url(#g)"/>
+        <g fill="#6366f1" opacity="0.9">
+          <circle cx="35" cy="55" r="18"/>
+          <rect x="65" y="40" width="60" height="30" rx="6"/>
+        </g>
+      </svg>`
+    }
+
+    function fileToDataURL(file){
+      return new Promise((resolve,reject)=>{
+        const fr = new FileReader();
+        fr.onload = () => resolve(fr.result);
+        fr.onerror = reject;
+        fr.readAsDataURL(file);
+      })
+    }
+
+    // ===== Rendering =====
+    const gridEl = document.getElementById('grid');
+    const chipsEl = document.getElementById('chips');
+    const sortEl = document.getElementById('sort');
+    const searchEl = document.getElementById('search');
+
+    let activeCat = 'All';
+
+    function renderChips(){
+      chipsEl.innerHTML = '';
+      const all = document.createElement('button');
+      all.className = 'chip';
+      all.textContent = 'All';
+      all.onclick = ()=>{ activeCat='All'; renderProducts() };
+      chipsEl.appendChild(all);
+      categories.forEach(c => {
+        const b = document.createElement('button');
+        b.className = 'chip';
+        b.textContent = c;
+        b.onclick = ()=>{ activeCat=c; renderProducts() };
+        chipsEl.appendChild(b);
+      })
+    }
+
+    function renderProducts(){
+      const q = searchEl.value.toLowerCase().trim();
+      const sort = sortEl.value;
+      let items = getProducts();
+      if(activeCat !== 'All') items = items.filter(i => i.cat === activeCat);
+      if(q) items = items.filter(i => (i.title+" "+i.desc).toLowerCase().includes(q));
+
+      items.sort((a,b)=>{
+        if(sort==='newest') return new Date(b.createdAt) - new Date(a.createdAt);
+        if(sort==='price_asc') return (a.price||0) - (b.price||0);
+        if(sort==='price_desc') return (b.price||0) - (a.price||0);
+        return 0;
+      })
+
+      gridEl.innerHTML = '';
+      if(!items.length){
+        const empty = document.createElement('div');
+        empty.className='card pad';
+        empty.innerHTML = `<strong>No items found.</strong> Try changing filters or posting a new item.`;
+        gridEl.appendChild(empty);
+        return;
+      }
+
+      for(const item of items){
+        const card = document.createElement('article');
+        card.className='prod';
+        card.innerHTML = `
+          <div class="thumb">${ item.img ? `<img src="${item.img}" alt="${item.title}">` : placeholderSVG() }</div>
+          <div class="p-body">
+            <div class="p-title">${item.title}</div>
+            <div class="p-meta">
+              <span class="price">₦${N(item.price||0)}</span>
+              <span class="badge">${item.cat}</span>
+            </div>
+            <div class="card-actions">
+              <button class="btn" data-act="view" data-id="${item.id}">View</button>
+              <button class="btn" data-act="sold" data-id="${item.id}">${item.sold? 'Mark Unsold':'Mark Sold'}</button>
+              <button class="btn" data-act="del" data-id="${item.id}">Delete</button>
+            </div>
+          </div>`;
+        card.querySelectorAll('button').forEach(btn=>btn.addEventListener('click', onCardAction));
+        gridEl.appendChild(card);
+      }
+    }
+
+    function onCardAction(e){
+      const id = e.currentTarget.getAttribute('data-id');
+      const act = e.currentTarget.getAttribute('data-act');
+      const items = getProducts();
+      const item = items.find(x=>x.id===id);
+      if(!item) return;
+
+      if(act==='view') return openItemModal(item);
+      if(act==='sold'){
+        item.sold = !item.sold;
+        setProducts(items); renderProducts(); return;
+      }
+      if(act==='del'){
+        if(confirm('Delete this item?')){
+          setProducts(items.filter(x=>x.id!==id));
+          renderProducts();
+        }
+      }
+    }
+
+    // ===== Item Modal =====
+    const itemModal = document.getElementById('itemModal');
+    const modalBody = document.getElementById('modalBody');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    btnCloseModal.onclick = ()=> itemModal.classList.remove('active');
+
+    function openItemModal(item){
+      modalBody.innerHTML = `
+        <div class="grid-2">
+          <div>
+            <div class="thumb">${ item.img ? `<img src="${item.img}" alt="${item.title}">` : placeholderSVG() }</div>
+          </div>
+          <div>
+            <h3 style="margin-top:0">${item.title}</h3>
+            <p style="color:var(--muted)">${item.desc || ''}</p>
+            <p><strong>Price:</strong> ₦${N(item.price||0)}</p>
+            <p><strong>Category:</strong> ${item.cat}</p>
+            <p><strong>Contact:</strong> ${item.contact}</p>
+            <p><strong>Status:</strong> ${item.sold? '<span style="color:var(--danger)">SOLD</span>':'Available'}</p>
+            <div style="display:flex;gap:10px;margin-top:8px">
+              <button class="btn" id="mdlToggleSold">${item.sold? 'Mark Unsold':'Mark Sold'}</button>
+              <button class="btn" id="mdlDelete">Delete</button>
+            </div>
+          </div>
+        </div>`;
+
+      document.getElementById('mdlToggleSold').onclick = ()=>{
+        const items = getProducts();
+        const t = items.find(x=>x.id===item.id); if(!t) return;
+        t.sold = !t.sold; setProducts(items); itemModal.classList.remove('active'); renderProducts();
+      }
+      document.getElementById('mdlDelete').onclick = ()=>{
+        if(confirm('Delete this item?')){
+          const items = getProducts().filter(x=>x.id!==item.id);
+          setProducts(items); itemModal.classList.remove('active'); renderProducts();
+        }
+      }
+
+      itemModal.classList.add('active');
+    }
+
+    // ===== Quick Post =====
+    function resetQuickPost(){
+      document.getElementById('qp-title').value='';
+      document.getElementById('qp-price').value='';
+      document.getElementById('qp-desc').value='';
+      document.getElementById('qp-contact').value='';
+      document.getElementById('qp-cat').selectedIndex=0;
+    }
+
+    document.getElementById('qp-post').onclick = ()=>{
+      const title = document.getElementById('qp-title').value.trim();
+      const price = parseInt(document.getElementById('qp-price').value,10)||0;
+      const cat = document.getElementById('qp-cat').value;
+      const contact = document.getElementById('qp-contact').value.trim();
+      const desc = document.getElementById('qp-desc').value.trim();
+      if(!title) return alert('Title is required');
+      const items = getProducts();
+      items.unshift({id:uid(), title, price, cat, contact, desc, createdAt:now(), sold:false, img:''});
+      setProducts(items); resetQuickPost(); renderProducts();
+    }
+
+    // ===== Upload Modal (Full) =====
+    const uploadModal = document.getElementById('uploadModal');
+    const btnOpenUpload = document.getElementById('btnOpenUpload');
+    const btnCloseUpload = document.getElementById('btnCloseUpload');
+    const btnResetForm = document.getElementById('btnResetForm');
+    const btnSaveItem = document.getElementById('btnSaveItem');
+
+    btnOpenUpload.onclick = ()=> uploadModal.classList.add('active');
+    btnCloseUpload.onclick = ()=> uploadModal.classList.remove('active');
+    btnResetForm.onclick = ()=>{
+      ['up-title','up-price','up-contact','up-desc'].forEach(id => document.getElementById(id).value='');
+      document.getElementById('up-cat').selectedIndex=0;
+      document.getElementById('up-image').value='';
+    }
+
+    btnSaveItem.onclick = async ()=>{
+      const title = document.getElementById('up-title').value.trim();
+      const price = parseInt(document.getElementById('up-price').value,10)||0;
+      const cat = document.getElementById('up-cat').value;
+      const contact = document.getElementById('up-contact').value.trim();
+      const desc = document.getElementById('up-desc').value.trim();
+      const file = document.getElementById('up-image').files[0];
+      if(!title){ alert('Title is required'); return }
+      let img = '';
+      try{ if(file) img = await fileToDataURL(file); }catch(e){ console.warn(e) }
+      if(!img) img = 'data:image/svg+xml;base64,'+btoa(placeholderSVG());
+      const items = getProducts();
+      items.unshift({id:uid(), title, price, cat, contact, desc, createdAt:now(), sold:false, img});
+      setProducts(items);
+      uploadModal.classList.remove('active');
+      renderProducts();
+    }
+
+    // ===== Import/Export =====
+    document.getElementById('btnExport').onclick = ()=>{
+      const blob = new Blob([JSON.stringify(getProducts(), null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'campus-trade-data.json'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('btnImport').onclick = ()=>{
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'application/json';
+      inp.onchange = async () => {
+        const file = inp.files[0]; if(!file) return;
+        const text = await file.text();
+        try{ const data = JSON.parse(text); if(Array.isArray(data)){ setProducts(data); renderProducts(); } else alert('Invalid file'); }
+        catch(e){ alert('Could not parse JSON') }
+      };
+      inp.click();
+    }
+
+    // ===== Init =====
+    function populateCategorySelects(){
+      const fill = (sel) => { sel.innerHTML = categories.map(c=>`<option>${c}</option>`).join('') }
+      fill(document.getElementById('qp-cat'));
+      fill(document.getElementById('up-cat'));
+    }
+
+    (function init(){
+      document.getElementById('year').textContent = new Date().getFullYear();
+      renderChips();
+      populateCategorySelects();
+      seedIfEmpty();
+      renderProducts();
+      searchEl.addEventListener('input', renderProducts);
+      sortEl.addEventListener('change', renderProducts);
+
+      // Close modals when clicking backdrop
+      [itemModal, uploadModal].forEach(m => m.addEventListener('click', (e)=>{ if(e.target===m) m.classList.remove('active') }))
+    })();
+  </script>
+</body>
+</html>
